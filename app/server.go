@@ -16,19 +16,24 @@ const (
 func main() {
 	fmt.Println("Start server on port 4221")
 
-	l, err := net.Listen("tcp", "0.0.0.0:4221")
+	tcp, err := net.Listen("tcp", "0.0.0.0:4221")
+
+	defer tcp.Close()
+
 	if err != nil {
 		fmt.Println("Failed to bind to port 4221")
 		os.Exit(1)
 	}
 
-	conn, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
-	}
+	for {
+		conn, err := tcp.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
+		}
 
-	go handleConnection(conn)
+		go handleConnection(conn)
+	}
 }
 
 func handleConnection(conn net.Conn) {
