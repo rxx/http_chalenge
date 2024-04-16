@@ -8,3 +8,7 @@ run = 'go run ./...'
 
 [nix]
 channel = 'stable-23_11'
+
+[[ports]]
+localPort = 4221
+externalPort = 80
