@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 )
@@ -37,11 +39,10 @@ func main() {
 }
 
 func handleConnection(conn net.Conn) {
-	var data []byte
 	defer conn.Close()
 
 	for {
-		_, err := conn.Read(data)
+		data, err := readData(conn)
 		if err != nil {
 			fmt.Printf("Error on reading data: %v\n", err)
 			return
@@ -59,11 +60,9 @@ func handleConnection(conn net.Conn) {
 }
 
 func handleRequest(data []byte) []byte {
-	var response []byte
+	fmt.Printf("Request: %s\n", data)
 
-	_ = data
-
-	return response
+	return blankSuccessResponse()
 }
 
 func blankSuccessResponse() []byte {
@@ -72,4 +71,16 @@ func blankSuccessResponse() []byte {
 
 func bytes(str string) []byte {
 	return []byte(str)
+}
+
+func readData(conn net.Conn) ([]byte, error) {
+	data := make([]byte, 1024)
+	size, err := conn.Read(data)
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			return nil, fmt.Errorf("client has disconnected %w", err)
+		}
+		return nil, fmt.Errorf("error on reading from socket due to %w", err)
+	}
+	return data[:size], nil
 }
