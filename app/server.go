@@ -70,7 +70,7 @@ func handleRequest(data []byte) []byte {
 	if url == "/" {
 		return buildBlankResponse(HTTP_OK)
 	} else if strings.HasPrefix(url, "/echo/") {
-		echoMsg := strings.Split(url, "/echo")
+		echoMsg := strings.Split(url, "/echo/")
 		return buildPlainResponse(HTTP_OK, echoMsg[1])
 	}
 
@@ -89,7 +89,7 @@ func buildPlainResponse(status string, msg string) []byte {
 	var sb strings.Builder
 	sb.WriteString(buildStatusLine(status))
     sb.WriteString(buildHeader("Content-Type","text/plain"))
-	sb.WriteString(buildHeader("Content-Length", fmt.Sprintf("%d", len(msg)-1)))
+	sb.WriteString(buildHeader("Content-Length", fmt.Sprintf("%d", len(msg))))
 	sb.WriteString(CRLF)
 	sb.WriteString(msg)
 	sb.WriteString(CRLF)
