@@ -6,6 +6,8 @@ import (
 	"io"
 	"net"
 	"os"
+    "log/slog"
+    "strings"
 )
 
 const (
@@ -16,21 +18,21 @@ const (
 )
 
 func main() {
-	fmt.Println("Start server on port 4221")
+	slog.Info("Start server on port 4221")
 
 	tcp, err := net.Listen("tcp", "0.0.0.0:4221")
 
 	defer tcp.Close()
 
 	if err != nil {
-		fmt.Println("Failed to bind to port 4221")
+		slog.Error("Failed to bind to port 4221")
 		os.Exit(1)
 	}
 
 	for {
 		conn, err := tcp.Accept()
 		if err != nil {
-			fmt.Println("Error accepting connection: ", err.Error())
+			slog.Error("Error accepting connection: ", err)
 			os.Exit(1)
 		}
 
@@ -44,7 +46,7 @@ func handleConnection(conn net.Conn) {
 	for {
 		data, err := readData(conn)
 		if err != nil {
-			fmt.Printf("Error on reading data: %v\n", err)
+			slog.Error("Error on reading data:", err)
 			return
 		}
 		response := handleRequest(data)
@@ -52,7 +54,7 @@ func handleConnection(conn net.Conn) {
 		_, err = conn.Write(response)
 
 		if err != nil {
-			fmt.Printf("Error on writing data: %v\n", err)
+			slog.Error("Error on writing data: %v\n", err)
 			return
 		}
 
@@ -60,13 +62,25 @@ func handleConnection(conn net.Conn) {
 }
 
 func handleRequest(data []byte) []byte {
-	fmt.Printf("Request: %s\n", data)
+    requestLines := strings.Split(string(data),"\r\n")
+    path := strings.Split(requestLines[0], " ")
 
-	return blankSuccessResponse()
+    if len(path) != 3 {
+       return buildResponse("400 BAD REQUEST")
+    }
+    url := path[1]
+
+    if url == "/" {
+        return buildResponse(HTTP_OK)
+        }
+
+    return buildResponse(HTTP_NOT_FOUND)
+
+	return buildResponse(HTTP_OK)
 }
 
-func blankSuccessResponse() []byte {
-	return bytes(fmt.Sprintf("%s %s%s%s", PROTOCOL, HTTP_OK, CRLF, CRLF))
+func buildResponse(status string) []byte {
+	return bytes(fmt.Sprintf("%s %s%s%s", PROTOCOL, status, CRLF, CRLF))
 }
 
 func bytes(str string) []byte {
