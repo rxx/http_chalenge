@@ -87,7 +87,7 @@ func parseHeaders(lines []string) map[string]string {
         if strings.Index(line, ":") < 1 { continue }
 
         parts := strings.SplitN(line, ":", 2)
-        headers[parts[0]] = parts[1]
+        headers[parts[0]] = strings.TrimSpace(parts[1])
         
 }
     return headers
