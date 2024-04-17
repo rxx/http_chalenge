@@ -89,7 +89,7 @@ func buildPlainResponse(status string, msg string) []byte {
 	var sb strings.Builder
 	sb.WriteString(buildStatusLine(status))
     sb.WriteString(buildHeader("Content-Type","text/plain"))
-	sb.WriteString(buildHeader("Content-Length", fmt.Sprintf("%d", len(msg))))
+	sb.WriteString(buildHeader("Content-Length", fmt.Sprintf("%d", len(msg)-1)))
 	sb.WriteString(CRLF)
 	sb.WriteString(msg)
 	sb.WriteString(CRLF)
