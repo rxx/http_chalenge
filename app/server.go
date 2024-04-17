@@ -53,15 +53,16 @@ func handleConnection(conn net.Conn) {
 	_, err = conn.Write(response)
 
 	if err != nil {
-		slog.Error("Error on writing data: %v\n", err)
+		slog.Error("Error on writing data: ", err)
 		return
 	}
 }
 
 func handleRequest(data []byte) []byte {
+	slog.Info("Request received: ", "data", string(data))
 	requestLines := strings.Split(string(data), "\r\n")
 	path := strings.Split(requestLines[0], " ")
-    headers := parseHeaders(requestLines[1:])
+	headers := parseHeaders(requestLines[1:])
 
 	if len(path) != 3 {
 		return buildBlankResponse("400 BAD REQUEST")
@@ -74,23 +75,25 @@ func handleRequest(data []byte) []byte {
 		echoMsg := strings.Split(url, "/echo/")
 		return buildPlainResponse(HTTP_OK, echoMsg[1])
 	} else if url == "/user-agent" {
-        return buildPlainResponse(HTTP_OK, headers["User-Agent"])
-        }
+		return buildPlainResponse(HTTP_OK, headers["User-Agent"])
+	}
 
 	return buildBlankResponse(HTTP_NOT_FOUND)
 }
 
 func parseHeaders(lines []string) map[string]string {
-    headers := make(map[string]string)
+	headers := make(map[string]string)
 
-    for _, line := range(lines) {
-        if strings.Index(line, ":") < 1 { continue }
+	for _, line := range lines {
+		if strings.Index(line, ":") < 1 {
+			continue
+		}
 
-        parts := strings.SplitN(line, ":", 2)
-        headers[parts[0]] = strings.TrimSpace(parts[1])
-        
-}
-    return headers
+		parts := strings.SplitN(line, ":", 2)
+		headers[parts[0]] = strings.TrimSpace(parts[1])
+
+	}
+	return headers
 }
 
 func buildBlankResponse(status string) []byte {
@@ -104,7 +107,7 @@ func buildBlankResponse(status string) []byte {
 func buildPlainResponse(status string, msg string) []byte {
 	var sb strings.Builder
 	sb.WriteString(buildStatusLine(status))
-    sb.WriteString(buildHeader("Content-Type","text/plain"))
+	sb.WriteString(buildHeader("Content-Type", "text/plain"))
 	sb.WriteString(buildHeader("Content-Length", fmt.Sprintf("%d", len(msg))))
 	sb.WriteString(CRLF)
 	sb.WriteString(msg)
