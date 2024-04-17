@@ -61,6 +61,7 @@ func handleConnection(conn net.Conn) {
 func handleRequest(data []byte) []byte {
 	requestLines := strings.Split(string(data), "\r\n")
 	path := strings.Split(requestLines[0], " ")
+    headers := parseHeaders(requestLines[1:])
 
 	if len(path) != 3 {
 		return buildBlankResponse("400 BAD REQUEST")
@@ -72,9 +73,24 @@ func handleRequest(data []byte) []byte {
 	} else if strings.HasPrefix(url, "/echo/") {
 		echoMsg := strings.Split(url, "/echo/")
 		return buildPlainResponse(HTTP_OK, echoMsg[1])
-	}
+	} else if url == "/user-agent" {
+        return buildPlainResponse(HTTP_OK, headers["User-Agent"])
+        }
 
 	return buildBlankResponse(HTTP_NOT_FOUND)
+}
+
+func parseHeaders(lines []string) map[string]string {
+    headers := make(map[string]string)
+
+    for _, line := range(lines) {
+        if strings.Index(line, ":") < 1 { continue }
+
+        parts := strings.SplitN(line, ":", 2)
+        headers[parts[0]] = parts[1]
+        
+}
+    return headers
 }
 
 func buildBlankResponse(status string) []byte {

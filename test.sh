@@ -1,7 +1,14 @@
 
 
-curl -i -X GET http://localhost:4221/
+curl --verbose 127.0.0.1:4221/
+echo "------------------"
 
-curl -i -X GET http://localhost:4221/index.html
+curl --verbose 127.0.0.1:4221/index.html
+echo "------------------"
 
-curl -i -X GET http://localhost:4221/echo/1/2/3
+curl --verbose 127.0.0.1:4221/echo/1/2/3
+echo "------------------"
+
+
+curl --verbose 127.0.0.1:4221/user-agent
+echo "------------------"
