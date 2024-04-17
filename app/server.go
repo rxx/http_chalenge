@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"os"
-    "log/slog"
-    "strings"
+	"strings"
 )
 
 const (
@@ -43,44 +43,66 @@ func main() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	for {
-		data, err := readData(conn)
-		if err != nil {
-			slog.Error("Error on reading data:", err)
-			return
-		}
-		response := handleRequest(data)
+	data, err := readData(conn)
+	if err != nil {
+		slog.Error("Error on reading data:", err)
+		return
+	}
+	response := handleRequest(data)
 
-		_, err = conn.Write(response)
+	_, err = conn.Write(response)
 
-		if err != nil {
-			slog.Error("Error on writing data: %v\n", err)
-			return
-		}
-
+	if err != nil {
+		slog.Error("Error on writing data: %v\n", err)
+		return
 	}
 }
 
 func handleRequest(data []byte) []byte {
-    requestLines := strings.Split(string(data),"\r\n")
-    path := strings.Split(requestLines[0], " ")
+	requestLines := strings.Split(string(data), "\r\n")
+	path := strings.Split(requestLines[0], " ")
 
-    if len(path) != 3 {
-       return buildResponse("400 BAD REQUEST")
-    }
-    url := path[1]
+	if len(path) != 3 {
+		return buildBlankResponse("400 BAD REQUEST")
+	}
+	url := path[1]
 
-    if url == "/" {
-        return buildResponse(HTTP_OK)
-        }
+	if url == "/" {
+		return buildBlankResponse(HTTP_OK)
+	} else if strings.HasPrefix(url, "/echo/") {
+		echoMsg := strings.Split(url, "/echo")
+		return buildPlainResponse(HTTP_OK, echoMsg[1])
+	}
 
-    return buildResponse(HTTP_NOT_FOUND)
-
-	return buildResponse(HTTP_OK)
+	return buildBlankResponse(HTTP_NOT_FOUND)
 }
 
-func buildResponse(status string) []byte {
-	return bytes(fmt.Sprintf("%s %s%s%s", PROTOCOL, status, CRLF, CRLF))
+func buildBlankResponse(status string) []byte {
+	var sb strings.Builder
+	sb.WriteString(buildStatusLine(status))
+	sb.WriteString(CRLF)
+
+	return bytes(sb.String())
+}
+
+func buildPlainResponse(status string, msg string) []byte {
+	var sb strings.Builder
+	sb.WriteString(buildStatusLine(status))
+    sb.WriteString(buildHeader("Content-Type","text/plain"))
+	sb.WriteString(buildHeader("Content-Length", fmt.Sprintf("%d", len(msg))))
+	sb.WriteString(CRLF)
+	sb.WriteString(msg)
+	sb.WriteString(CRLF)
+
+	return bytes(sb.String())
+}
+
+func buildStatusLine(status string) string {
+	return fmt.Sprintf("%s %s%s", PROTOCOL, status, CRLF)
+}
+
+func buildHeader(key, value string) string {
+	return fmt.Sprintf("%s: %s%s", key, value, CRLF)
 }
 
 func bytes(str string) []byte {
